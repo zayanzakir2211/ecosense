@@ -428,7 +428,7 @@ footer {
    CONFIG — edit before deployment
 ════════════════════════════════════════════════ */
 const CONFIG = {
-  dataURL: "data.json",
+  dataURL: "https://raw.githubusercontent.com/zayanzakir2211/ecosense/refs/heads/main/data.json",
   useMockData: false,        // set false when Pi data is ready
   refreshInterval: 3600000, // 1 hour in ms
 };
@@ -618,11 +618,94 @@ const state = {
 function s(key) { return STRINGS[state.lang][key] || key; }
 
 /* ════════════════════════════════════════════════
+   NORMALIZE — accepts multiple JSON shapes:
+   - sensors as object OR array
+   - with or without meta field
+   - with or without daily/monthly/yearly
+     (auto-computed from readings if missing)
+════════════════════════════════════════════════ */
+function normalizeData(raw) {
+  // Normalize sensors: object → array
+  let sensors = [];
+  if (Array.isArray(raw.sensors)) {
+    sensors = raw.sensors;
+  } else if (raw.sensors && typeof raw.sensors === "object") {
+    sensors = Object.entries(raw.sensors).map(([id, s]) => ({ id, ...s }));
+  }
+
+  // Ensure each sensor has readings as array and derived views
+  sensors = sensors.map(sensor => {
+    const readings = Array.isArray(sensor.readings) ? sensor.readings : [];
+
+    // Build daily averages from readings if not provided
+    const daily = sensor.daily || buildDailyFromReadings(readings);
+    const monthly = sensor.monthly || buildMonthlyFromReadings(readings);
+    const yearly = sensor.yearly || buildYearlyFromReadings(readings);
+
+    return { id: sensor.id || "sensor_01", name: sensor.name || "Sensor",
+             name_bn: sensor.name_bn || sensor.name || "সেন্সর",
+             location: sensor.location || null,
+             active: sensor.active !== false,
+             readings, daily, monthly, yearly };
+  });
+
+  // Normalize meta
+  const meta = raw.meta || {
+    version: "1.0",
+    updated: sensors[0]?.readings?.slice(-1)[0]?.timestamp || new Date().toISOString()
+  };
+
+  return { meta, sensors };
+}
+
+function avgReadings(list) {
+  if (!list.length) return null;
+  const result = {};
+  METRICS.forEach(m => {
+    const vals = list.map(r => +r[m.key]).filter(v => !isNaN(v));
+    result[m.key] = vals.length ? +(vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(m.decimals) : 0;
+  });
+  return result;
+}
+
+function buildDailyFromReadings(readings) {
+  const byDay = {};
+  readings.forEach(r => {
+    const day = r.timestamp.split("T")[0];
+    if (!byDay[day]) byDay[day] = [];
+    byDay[day].push(r);
+  });
+  return Object.entries(byDay).map(([date, list]) => ({ date, ...avgReadings(list) }));
+}
+
+function buildMonthlyFromReadings(readings) {
+  const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  const byMonth = {};
+  readings.forEach(r => {
+    const d = new Date(r.timestamp);
+    const key = d.getFullYear() + "-" + d.getMonth();
+    if (!byMonth[key]) byMonth[key] = { month: months[d.getMonth()], list: [] };
+    byMonth[key].list.push(r);
+  });
+  return Object.values(byMonth).map(({ month, list }) => ({ month, ...avgReadings(list) }));
+}
+
+function buildYearlyFromReadings(readings) {
+  const byYear = {};
+  readings.forEach(r => {
+    const yr = new Date(r.timestamp).getFullYear();
+    if (!byYear[yr]) byYear[yr] = [];
+    byYear[yr].push(r);
+  });
+  return Object.entries(byYear).map(([year, list]) => ({ year: String(year), ...avgReadings(list) }));
+}
+
+/* ════════════════════════════════════════════════
    DATA FETCH
 ════════════════════════════════════════════════ */
 async function fetchData() {
   if (CONFIG.useMockData) {
-    state.data = buildMockData();
+    state.data = normalizeData(buildMockData());
     document.getElementById("errorBanner").style.display = "none";
     renderAll();
     return;
@@ -630,12 +713,13 @@ async function fetchData() {
   try {
     const res = await fetch(CONFIG.dataURL + "?_=" + Date.now());
     if (!res.ok) throw new Error("HTTP " + res.status);
-    state.data = await res.json();
+    const raw = await res.json();
+    state.data = normalizeData(raw);
     document.getElementById("errorBanner").style.display = "none";
   } catch (e) {
     document.getElementById("errorBanner").textContent = s("errorMsg");
     document.getElementById("errorBanner").style.display = "block";
-    if (!state.data) state.data = buildMockData();
+    if (!state.data) state.data = normalizeData(buildMockData());
   }
   renderAll();
 }

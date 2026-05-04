@@ -2,6 +2,7 @@
   "sensors": {
     "sensor_01": {
       "name": "Dhanmondi",
+      "name_bn": "ধানমন্ডি",
       "location": {"lat": 23.74, "lng": 90.37},
       "readings": [
         {
