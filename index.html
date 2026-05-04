@@ -760,8 +760,8 @@ function calcSensorScore(sensor) {
 function renderHeader() {
   if (!state.data) return;
   const d = new Date(state.data.meta.updated);
-  const time = d.toLocaleTimeString(state.lang === "bn" ? "bn-BD" : "en-US",
-    { hour: "2-digit", minute: "2-digit" });
+  const time = d.toLocaleString(state.lang === "bn" ? "bn-BD" : "en-US",
+    { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
   document.getElementById("updatedText").textContent = s("updated") + " " + time;
 }
 
@@ -818,9 +818,18 @@ function getChartData() {
   const now = new Date();
 
   if (state.view === "hourly") {
-    const todayR = sensor.readings.filter(r =>
-      new Date(r.timestamp).toDateString() === now.toDateString()
+    // Try today first, fall back to most recent available day
+    const todayStr = now.toDateString();
+    let todayR = sensor.readings.filter(r =>
+      new Date(r.timestamp).toDateString() === todayStr
     );
+    if (!todayR.length && sensor.readings.length) {
+      // Find the most recent day in the data
+      const latestDate = new Date(sensor.readings[sensor.readings.length - 1].timestamp).toDateString();
+      todayR = sensor.readings.filter(r =>
+        new Date(r.timestamp).toDateString() === latestDate
+      );
+    }
     return {
       labels: todayR.map(r => {
         const h = new Date(r.timestamp).getHours();
@@ -862,8 +871,18 @@ function renderChart() {
   const { labels, values } = getChartData();
   const m = METRICS.find(x => x.key === state.metric);
 
-  document.getElementById("chartTitle").textContent = s("chart" +
-    state.view.charAt(0).toUpperCase() + state.view.slice(1));
+  document.getElementById("chartTitle").textContent = (() => {
+    if (state.view !== "hourly") return s("chart" + state.view.charAt(0).toUpperCase() + state.view.slice(1));
+    const sensor = state.data?.sensors[0];
+    if (!sensor?.readings?.length) return s("chartHourly");
+    const latestTs = sensor.readings[sensor.readings.length - 1].timestamp;
+    const latestDate = new Date(latestTs);
+    const isToday = latestDate.toDateString() === new Date().toDateString();
+    if (isToday) return s("chartHourly");
+    const dateStr = latestDate.toLocaleDateString(state.lang === "bn" ? "bn-BD" : "en-US",
+      { month: "short", day: "numeric" });
+    return (state.lang === "bn" ? "প্রতি ঘণ্টার তথ্য — " : "Hourly readings — ") + dateStr;
+  })();
 
   // Metric tabs
   document.getElementById("metricTabs").innerHTML = METRICS.map(metric => {
