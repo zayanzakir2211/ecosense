@@ -1,0 +1,17 @@
+{
+  "sensors": {
+    "sensor_01": {
+      "name": "Dhanmondi",
+      "location": {"lat": 23.74, "lng": 90.37},
+      "readings": [
+        {
+          "timestamp": "2024-01-15T10:00:00",
+          "pm25": 45.2,
+          "co2": 412,
+          "temperature": 28.5,
+          "sound": 62.3
+        }
+      ]
+    }
+  }
+}

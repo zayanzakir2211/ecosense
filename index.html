@@ -1,0 +1,929 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EcoSense — Environmental Monitoring</title>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --g50: #eaf3de; --g100: #c0dd97; --g200: #97c459;
+  --g400: #639922; --g600: #3b6d11; --g800: #27500a; --g900: #173404;
+  --bg: #f5f9f1;
+  --surface: #ffffff;
+  --surface2: #f0f5ea;
+  --text: #1a2e10;
+  --muted: #5a7a48;
+  --border: #d0e8b8;
+  --warn-bg: #fef9ec; --warn-border: #f5d78a; --warn-text: #7a5c00;
+  --danger-bg: #fef0ef; --danger-border: #f5b8b6; --danger-text: #8b2020;
+  --radius: 10px;
+  --font-display: 'Lora', Georgia, serif;
+  --font-body: 'DM Sans', system-ui, sans-serif;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: var(--font-body);
+  background: var(--bg);
+  color: var(--text);
+  font-size: 15px;
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+/* ── HEADER ── */
+header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 0 24px;
+  height: 58px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+
+.logo {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--g800);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.logo-dot {
+  width: 8px; height: 8px;
+  background: var(--g400);
+  border-radius: 50%;
+  animation: pulse 2.5s ease-in-out infinite;
+}
+
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+.header-right { display: flex; align-items: center; gap: 14px; }
+
+.updated-tag {
+  font-size: 12px;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.updated-dot {
+  width: 6px; height: 6px;
+  background: var(--g400);
+  border-radius: 50%;
+}
+
+.lang-btn {
+  background: var(--g50);
+  border: 1px solid var(--border);
+  color: var(--g800);
+  padding: 5px 14px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 500;
+  transition: background 0.15s;
+}
+
+.lang-btn:hover { background: var(--g100); }
+
+/* ── MAIN ── */
+main {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 28px 20px 64px;
+}
+
+/* ── METRIC STRIP ── */
+.page-intro { margin-bottom: 20px; }
+.page-intro h1 {
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 400;
+  color: var(--g800);
+  font-style: italic;
+}
+.page-intro p { font-size: 13px; color: var(--muted); margin-top: 2px; }
+
+.metric-strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+  margin-bottom: 28px;
+}
+
+.mcard {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 16px 12px;
+  border-top: 3px solid var(--g400);
+  cursor: default;
+  transition: transform 0.12s;
+}
+
+.mcard:hover { transform: translateY(-2px); }
+
+.mcard-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--muted);
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.mcard-value {
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1;
+}
+
+.mcard-unit { font-size: 12px; color: var(--muted); margin-top: 3px; }
+
+.status-pill {
+  display: inline-block;
+  margin-top: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 9px;
+  border-radius: 20px;
+}
+
+.s-good { background: var(--g50); color: var(--g800); border: 1px solid var(--g100); }
+.s-moderate { background: var(--warn-bg); color: var(--warn-text); border: 1px solid var(--warn-border); }
+.s-poor { background: var(--danger-bg); color: var(--danger-text); border: 1px solid var(--danger-border); }
+
+/* ── LAYOUT ── */
+.content-grid {
+  display: grid;
+  grid-template-columns: 1fr 280px;
+  gap: 16px;
+  align-items: start;
+}
+
+@media (max-width: 820px) {
+  .content-grid { grid-template-columns: 1fr; }
+}
+
+/* ── TABS ── */
+.tab-row {
+  display: flex;
+  gap: 2px;
+  margin-bottom: 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 4px;
+  width: fit-content;
+}
+
+.tab {
+  background: none;
+  border: none;
+  padding: 6px 16px;
+  border-radius: 7px;
+  cursor: pointer;
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--muted);
+  font-weight: 500;
+  transition: all 0.15s;
+}
+
+.tab.active {
+  background: var(--g400);
+  color: white;
+  font-weight: 600;
+}
+
+/* ── CHART PANEL ── */
+.chart-panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px 20px;
+  margin-bottom: 14px;
+}
+
+.chart-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chart-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+
+.metric-tabs {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.mtab {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 3px 12px;
+  font-size: 12px;
+  cursor: pointer;
+  font-family: var(--font-body);
+  color: var(--muted);
+  font-weight: 500;
+  transition: all 0.12s;
+}
+
+.mtab.active {
+  background: var(--g800);
+  color: white;
+  border-color: var(--g800);
+}
+
+.chart-wrap { position: relative; width: 100%; height: 220px; }
+
+/* ── RANKING ── */
+.ranking-panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px;
+}
+
+.ranking-title {
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--g800);
+  margin-bottom: 14px;
+}
+
+.rank-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--surface2);
+}
+
+.rank-item:last-child { border-bottom: none; }
+
+.rank-num {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 600;
+  width: 22px;
+  flex-shrink: 0;
+  color: var(--g100);
+}
+
+.rank-num.r1 { color: var(--g600); }
+.rank-num.r2 { color: var(--g400); }
+.rank-num.r3 { color: var(--g200); }
+
+.rank-info { flex: 1; min-width: 0; }
+.rank-name { font-weight: 600; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.rank-bar {
+  height: 4px;
+  background: var(--surface2);
+  border-radius: 2px;
+  margin-top: 5px;
+  overflow: hidden;
+}
+
+.rank-fill { height: 100%; border-radius: 2px; transition: width 0.6s ease; }
+
+.rank-score { font-size: 11px; color: var(--muted); margin-top: 3px; }
+
+/* ── ERROR BANNER ── */
+.error-banner {
+  background: var(--danger-bg);
+  border: 1px solid var(--danger-border);
+  color: var(--danger-text);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 13px;
+  margin-bottom: 14px;
+}
+
+/* ── FOOTER ── */
+footer {
+  text-align: center;
+  font-size: 12px;
+  color: var(--muted);
+  padding: 20px;
+  border-top: 1px solid var(--border);
+  margin-top: 40px;
+}
+
+/* ── LOADING ── */
+.skeleton {
+  background: linear-gradient(90deg, var(--surface2) 25%, var(--g50) 50%, var(--surface2) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite;
+  border-radius: 8px;
+  height: 80px;
+}
+
+@keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 600px) {
+  .metric-strip { grid-template-columns: 1fr 1fr; }
+  .page-intro h1 { font-size: 20px; }
+  main { padding: 18px 14px 48px; }
+  header { padding: 0 14px; }
+  .updated-tag span:not(.updated-dot) { display: none; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-dot"></div>
+    EcoSense
+  </div>
+  <div class="header-right">
+    <div class="updated-tag">
+      <div class="updated-dot"></div>
+      <span id="updatedText">—</span>
+    </div>
+    <button class="lang-btn" id="langBtn" onclick="toggleLang()">বাংলা</button>
+  </div>
+</header>
+
+<main>
+  <div class="page-intro">
+    <h1 id="heroTitle">Current air quality</h1>
+    <p id="heroSub">Live readings from environmental sensors across the city</p>
+  </div>
+
+  <div id="errorBanner" class="error-banner" style="display:none"></div>
+
+  <div class="metric-strip" id="metricStrip">
+    <div class="skeleton"></div>
+    <div class="skeleton"></div>
+    <div class="skeleton"></div>
+    <div class="skeleton"></div>
+  </div>
+
+  <div class="content-grid">
+    <div>
+      <div class="tab-row" id="tabRow">
+        <button class="tab active" data-view="hourly" id="tab-hourly">Today</button>
+        <button class="tab" data-view="daily" id="tab-daily">Daily</button>
+        <button class="tab" data-view="monthly" id="tab-monthly">Monthly</button>
+        <button class="tab" data-view="yearly" id="tab-yearly">Yearly</button>
+      </div>
+
+      <div class="chart-panel">
+        <div class="chart-top">
+          <div class="chart-title" id="chartTitle">Hourly readings — today</div>
+          <div class="metric-tabs" id="metricTabs"></div>
+        </div>
+        <div class="chart-wrap">
+          <canvas id="mainChart" role="img" aria-label="Environmental sensor readings chart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="ranking-panel">
+        <div class="ranking-title" id="rankTitle">Area ranking</div>
+        <div id="rankList"></div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer>
+  <span id="footerText">EcoSense · Environmental Monitoring Network · Data updates hourly</span>
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+/* ════════════════════════════════════════════════
+   CONFIG — edit before deployment
+════════════════════════════════════════════════ */
+const CONFIG = {
+  dataURL: "data.json",
+  useMockData: false,        // set false when Pi data is ready
+  refreshInterval: 3600000, // 1 hour in ms
+};
+
+/* ════════════════════════════════════════════════
+   i18n — add new string keys here as site grows
+════════════════════════════════════════════════ */
+const STRINGS = {
+  en: {
+    heroTitle: "Current air quality",
+    heroSub: "Live readings from environmental sensors across the city",
+    tabHourly: "Today",
+    tabDaily: "Daily",
+    tabMonthly: "Monthly",
+    tabYearly: "Yearly",
+    rankTitle: "Area ranking",
+    footer: "EcoSense · Environmental Monitoring Network · Data updates hourly",
+    good: "Good", moderate: "Moderate", poor: "Poor",
+    updated: "Updated",
+    chartHourly: "Hourly readings — today",
+    chartDaily: "Daily averages — last 30 days",
+    chartMonthly: "Monthly averages",
+    chartYearly: "Yearly averages",
+    score: "Score",
+    errorMsg: "Could not reach data source. Showing demo data.",
+  },
+  bn: {
+    heroTitle: "বর্তমান বায়ু মান",
+    heroSub: "শহরের পরিবেশ সেন্সর থেকে সরাসরি তথ্য",
+    tabHourly: "আজ",
+    tabDaily: "দৈনিক",
+    tabMonthly: "মাসিক",
+    tabYearly: "বার্ষিক",
+    rankTitle: "এলাকা র‍্যাংকিং",
+    footer: "EcoSense · পরিবেশ পর্যবেক্ষণ নেটওয়ার্ক · প্রতি ঘণ্টায় আপডেট",
+    good: "ভালো", moderate: "মাঝারি", poor: "খারাপ",
+    updated: "আপডেট",
+    chartHourly: "আজকের প্রতি ঘণ্টার তথ্য",
+    chartDaily: "দৈনিক গড় — গত ৩০ দিন",
+    chartMonthly: "মাসিক গড়",
+    chartYearly: "বার্ষিক গড়",
+    score: "স্কোর",
+    errorMsg: "তথ্য উৎস পাওয়া যায়নি। ডেমো ডেটা দেখানো হচ্ছে।",
+  }
+};
+
+/* ════════════════════════════════════════════════
+   METRICS — add new sensor types here
+   Each metric: key matches JSON field name
+════════════════════════════════════════════════ */
+const METRICS = [
+  {
+    key: "pm25",
+    label: { en: "PM2.5", bn: "PM2.5" },
+    unit: "µg/m³",
+    color: "#3b6d11",
+    colorMid: "#e9a84c",
+    colorBad: "#c94040",
+    thresholds: { good: 12, moderate: 35 },
+    decimals: 1,
+  },
+  {
+    key: "co2",
+    label: { en: "CO₂", bn: "CO₂" },
+    unit: "ppm",
+    color: "#3b6d11",
+    colorMid: "#e9a84c",
+    colorBad: "#c94040",
+    thresholds: { good: 800, moderate: 1200 },
+    decimals: 0,
+  },
+  {
+    key: "temperature",
+    label: { en: "Temp", bn: "তাপ" },
+    unit: "°C",
+    color: "#3b6d11",
+    colorMid: "#e9a84c",
+    colorBad: "#c94040",
+    thresholds: { good: 30, moderate: 38 },
+    decimals: 1,
+  },
+  {
+    key: "sound",
+    label: { en: "Sound", bn: "শব্দ" },
+    unit: "dB",
+    color: "#3b6d11",
+    colorMid: "#e9a84c",
+    colorBad: "#c94040",
+    thresholds: { good: 55, moderate: 70 },
+    decimals: 0,
+  }
+];
+
+/* ════════════════════════════════════════════════
+   JSON STRUCTURE for Pi developer
+   data.json must follow this format:
+   {
+     "meta": { "version": "1.0", "updated": "<ISO timestamp>" },
+     "sensors": [
+       {
+         "id": "sensor_01",
+         "name": "Area Name",
+         "name_bn": "এলাকার নাম",
+         "active": true,
+         "readings": [          ← hourly entries for today
+           { "timestamp": "<ISO>", "pm25": 0, "co2": 0, "temperature": 0, "sound": 0 }
+         ],
+         "daily": [             ← one entry per day, last 30 days
+           { "date": "YYYY-MM-DD", "pm25": 0, "co2": 0, "temperature": 0, "sound": 0 }
+         ],
+         "monthly": [           ← one entry per month
+           { "month": "Jan", "pm25": 0, "co2": 0, "temperature": 0, "sound": 0 }
+         ],
+         "yearly": [            ← one entry per year
+           { "year": "2024", "pm25": 0, "co2": 0, "temperature": 0, "sound": 0 }
+         ]
+       }
+     ]
+   }
+════════════════════════════════════════════════ */
+
+/* ════════════════════════════════════════════════
+   MOCK DATA — realistic demo data
+════════════════════════════════════════════════ */
+function buildMockData() {
+  const now = new Date();
+  const sensors = [
+    { id: "sensor_01", name: "Dhanmondi", name_bn: "ধানমণ্ডি" },
+  ];
+
+  function rnd(base, variance, drift = 0) {
+    return +(base + drift + (Math.random() - 0.5) * variance * 2).toFixed(2);
+  }
+
+  return {
+    meta: { version: "1.0", updated: now.toISOString() },
+    sensors: sensors.map(s => {
+      const readings = Array.from({ length: 24 }, (_, h) => {
+        const t = new Date(now); t.setHours(h, 0, 0, 0);
+        const rushHour = (h >= 7 && h <= 9) || (h >= 17 && h <= 19) ? 15 : 0;
+        return {
+          timestamp: t.toISOString(),
+          pm25: rnd(28, 10, rushHour + Math.sin(h / 4) * 8),
+          co2: rnd(520, 80, rushHour * 8 + Math.sin(h / 3) * 60),
+          temperature: rnd(27, 2, Math.sin((h - 6) / 12 * Math.PI) * 5),
+          sound: rnd(55, 8, rushHour + Math.sin(h / 2) * 6),
+        };
+      });
+
+      const daily = Array.from({ length: 30 }, (_, i) => {
+        const d = new Date(now); d.setDate(d.getDate() - (29 - i));
+        return {
+          date: d.toISOString().split("T")[0],
+          pm25: rnd(30, 12), co2: rnd(540, 90),
+          temperature: rnd(27, 3), sound: rnd(57, 10),
+        };
+      });
+
+      const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+      const monthly = months.map(m => ({
+        month: m, pm25: rnd(28, 14), co2: rnd(510, 100),
+        temperature: rnd(27, 5), sound: rnd(55, 12),
+      }));
+
+      const yr = now.getFullYear();
+      const yearly = Array.from({ length: 5 }, (_, i) => ({
+        year: String(yr - 4 + i),
+        pm25: rnd(32, 8), co2: rnd(500, 80),
+        temperature: rnd(26, 2), sound: rnd(56, 8),
+      }));
+
+      return { ...s, active: true, readings, daily, monthly, yearly };
+    })
+  };
+}
+
+/* ════════════════════════════════════════════════
+   STATE
+════════════════════════════════════════════════ */
+const state = {
+  lang: "en",
+  view: "hourly",
+  metric: "pm25",
+  data: null,
+};
+
+function s(key) { return STRINGS[state.lang][key] || key; }
+
+/* ════════════════════════════════════════════════
+   DATA FETCH
+════════════════════════════════════════════════ */
+async function fetchData() {
+  if (CONFIG.useMockData) {
+    state.data = buildMockData();
+    document.getElementById("errorBanner").style.display = "none";
+    renderAll();
+    return;
+  }
+  try {
+    const res = await fetch(CONFIG.dataURL + "?_=" + Date.now());
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    state.data = await res.json();
+    document.getElementById("errorBanner").style.display = "none";
+  } catch (e) {
+    document.getElementById("errorBanner").textContent = s("errorMsg");
+    document.getElementById("errorBanner").style.display = "block";
+    if (!state.data) state.data = buildMockData();
+  }
+  renderAll();
+}
+
+/* ════════════════════════════════════════════════
+   HELPERS
+════════════════════════════════════════════════ */
+function getStatus(metricKey, val) {
+  const m = METRICS.find(x => x.key === metricKey);
+  if (!m) return "good";
+  if (val <= m.thresholds.good) return "good";
+  if (val <= m.thresholds.moderate) return "moderate";
+  return "poor";
+}
+
+function getStatusColor(metricKey, val) {
+  const st = getStatus(metricKey, val);
+  if (st === "good") return "#3b6d11";
+  if (st === "moderate") return "#c07a00";
+  return "#c94040";
+}
+
+function calcSensorScore(sensor) {
+  const latest = sensor.readings[sensor.readings.length - 1];
+  let total = 0;
+  METRICS.forEach(m => {
+    const val = +latest[m.key];
+    const g = m.thresholds.good, p = m.thresholds.moderate;
+    const score = Math.max(0, Math.min(100, 100 - ((val - g) / (p - g)) * 100));
+    total += score;
+  });
+  return Math.round(total / METRICS.length);
+}
+
+/* ════════════════════════════════════════════════
+   RENDER — HEADER
+════════════════════════════════════════════════ */
+function renderHeader() {
+  if (!state.data) return;
+  const d = new Date(state.data.meta.updated);
+  const time = d.toLocaleTimeString(state.lang === "bn" ? "bn-BD" : "en-US",
+    { hour: "2-digit", minute: "2-digit" });
+  document.getElementById("updatedText").textContent = s("updated") + " " + time;
+}
+
+/* ════════════════════════════════════════════════
+   RENDER — METRIC STRIP
+════════════════════════════════════════════════ */
+function renderMetricStrip() {
+  const el = document.getElementById("metricStrip");
+  if (!state.data) return;
+  const sensor = state.data.sensors[0];
+  const latest = sensor.readings[sensor.readings.length - 1];
+
+  el.innerHTML = METRICS.map(m => {
+    const val = +latest[m.key];
+    const st = getStatus(m.key, val);
+    const label = m.label[state.lang] || m.label.en;
+    return `
+      <div class="mcard">
+        <div class="mcard-label">${label}</div>
+        <div class="mcard-value">${val.toFixed(m.decimals)}</div>
+        <div class="mcard-unit">${m.unit}</div>
+        <span class="status-pill s-${st}">${s(st)}</span>
+      </div>`;
+  }).join("");
+}
+
+/* ════════════════════════════════════════════════
+   RENDER — TABS & I18N
+════════════════════════════════════════════════ */
+function renderTabs() {
+  ["hourly","daily","monthly","yearly"].forEach(v => {
+    const btn = document.getElementById("tab-" + v);
+    btn.textContent = s("tab" + v.charAt(0).toUpperCase() + v.slice(1));
+    btn.classList.toggle("active", v === state.view);
+  });
+}
+
+function renderStrings() {
+  document.getElementById("heroTitle").textContent = s("heroTitle");
+  document.getElementById("heroSub").textContent = s("heroSub");
+  document.getElementById("rankTitle").textContent = s("rankTitle");
+  document.getElementById("footerText").textContent = s("footer");
+}
+
+/* ════════════════════════════════════════════════
+   RENDER — CHART
+════════════════════════════════════════════════ */
+let chartInstance = null;
+
+function getChartData() {
+  if (!state.data) return { labels: [], values: [] };
+  const sensor = state.data.sensors[0];
+  const m = METRICS.find(x => x.key === state.metric);
+  const now = new Date();
+
+  if (state.view === "hourly") {
+    const todayR = sensor.readings.filter(r =>
+      new Date(r.timestamp).toDateString() === now.toDateString()
+    );
+    return {
+      labels: todayR.map(r => {
+        const h = new Date(r.timestamp).getHours();
+        return h === 0 ? "12am" : h < 12 ? h + "am" : h === 12 ? "12pm" : (h - 12) + "pm";
+      }),
+      values: todayR.map(r => +r[state.metric])
+    };
+  }
+
+  if (state.view === "daily") {
+    const last14 = sensor.daily.slice(-14);
+    return {
+      labels: last14.map(d => {
+        const dt = new Date(d.date);
+        return (dt.getMonth() + 1) + "/" + dt.getDate();
+      }),
+      values: last14.map(d => +d[state.metric])
+    };
+  }
+
+  if (state.view === "monthly") {
+    return {
+      labels: sensor.monthly.map(d => d.month),
+      values: sensor.monthly.map(d => +d[state.metric])
+    };
+  }
+
+  if (state.view === "yearly") {
+    return {
+      labels: sensor.yearly.map(d => d.year),
+      values: sensor.yearly.map(d => +d[state.metric])
+    };
+  }
+
+  return { labels: [], values: [] };
+}
+
+function renderChart() {
+  const { labels, values } = getChartData();
+  const m = METRICS.find(x => x.key === state.metric);
+
+  document.getElementById("chartTitle").textContent = s("chart" +
+    state.view.charAt(0).toUpperCase() + state.view.slice(1));
+
+  // Metric tabs
+  document.getElementById("metricTabs").innerHTML = METRICS.map(metric => {
+    const label = metric.label[state.lang] || metric.label.en;
+    return `<button class="mtab ${metric.key === state.metric ? "active" : ""}"
+      onclick="setMetric('${metric.key}')">${label}</button>`;
+  }).join("");
+
+  const colors = values.map(v => getStatusColor(state.metric, v));
+  const isLine = state.view === "hourly";
+
+  if (chartInstance) { chartInstance.destroy(); chartInstance = null; }
+
+  const ctx = document.getElementById("mainChart").getContext("2d");
+  chartInstance = new Chart(ctx, {
+    type: isLine ? "line" : "bar",
+    data: {
+      labels,
+      datasets: [{
+        label: m.label.en + " (" + m.unit + ")",
+        data: values,
+        borderColor: "#3b6d11",
+        backgroundColor: isLine ? "rgba(59,109,17,0.1)" : colors,
+        borderWidth: isLine ? 2 : 0,
+        borderRadius: isLine ? 0 : 4,
+        fill: isLine,
+        pointBackgroundColor: isLine ? colors : undefined,
+        pointRadius: isLine ? 3 : 0,
+        tension: 0.35,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: ctx => ctx.parsed.y.toFixed(m.decimals) + " " + m.unit
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid: { color: "rgba(0,0,0,0.04)" },
+          ticks: {
+            color: "#5a7a48",
+            font: { size: 11 },
+            maxRotation: 0,
+            autoSkip: true,
+            maxTicksLimit: 12,
+          }
+        },
+        y: {
+          grid: { color: "rgba(0,0,0,0.04)" },
+          ticks: {
+            color: "#5a7a48",
+            font: { size: 11 },
+            callback: v => v.toFixed(m.decimals)
+          }
+        }
+      }
+    }
+  });
+}
+
+/* ════════════════════════════════════════════════
+   RENDER — RANKING
+════════════════════════════════════════════════ */
+function renderRanking() {
+  const el = document.getElementById("rankList");
+  if (!state.data) return;
+
+  const ranked = state.data.sensors
+    .filter(s => s.active)
+    .map(sensor => ({ sensor, score: calcSensorScore(sensor) }))
+    .sort((a, b) => b.score - a.score);
+
+  el.innerHTML = ranked.map((item, i) => {
+    const { sensor, score } = item;
+    const name = state.lang === "bn" && sensor.name_bn ? sensor.name_bn : sensor.name;
+    const st = score >= 70 ? "good" : score >= 40 ? "moderate" : "poor";
+    const fillColor = st === "good" ? "#3b6d11" : st === "moderate" ? "#c07a00" : "#c94040";
+    return `
+      <div class="rank-item">
+        <div class="rank-num r${i + 1}">${i + 1}</div>
+        <div class="rank-info">
+          <div class="rank-name">${name}</div>
+          <div class="rank-bar">
+            <div class="rank-fill" style="width:${score}%;background:${fillColor}"></div>
+          </div>
+          <div class="rank-score">${s("score")}: ${score}/100</div>
+        </div>
+        <span class="status-pill s-${st}">${s(st)}</span>
+      </div>`;
+  }).join("");
+}
+
+/* ════════════════════════════════════════════════
+   CONTROLLERS
+════════════════════════════════════════════════ */
+function setView(view) {
+  state.view = view;
+  renderTabs();
+  renderChart();
+}
+
+function setMetric(metric) {
+  state.metric = metric;
+  renderChart();
+}
+
+function toggleLang() {
+  state.lang = state.lang === "en" ? "bn" : "en";
+  document.getElementById("langBtn").textContent = state.lang === "en" ? "বাংলা" : "English";
+  renderAll();
+}
+
+/* ════════════════════════════════════════════════
+   RENDER ALL
+════════════════════════════════════════════════ */
+function renderAll() {
+  renderStrings();
+  renderHeader();
+  renderMetricStrip();
+  renderTabs();
+  renderChart();
+  renderRanking();
+}
+
+/* ════════════════════════════════════════════════
+   TAB CLICK WIRING
+════════════════════════════════════════════════ */
+document.getElementById("tabRow").addEventListener("click", e => {
+  if (e.target.classList.contains("tab")) {
+    setView(e.target.dataset.view);
+  }
+});
+
+/* ════════════════════════════════════════════════
+   INIT
+════════════════════════════════════════════════ */
+fetchData();
+setInterval(fetchData, CONFIG.refreshInterval);
+</script>
+</body>
+</html>
