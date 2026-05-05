@@ -1,0 +1,21 @@
+{
+  "sensors": {
+    "sensor_01": {
+      "name": "Jhenaidah",
+      "name_bn": "ঝিনাইদহ",
+      "location": {
+        "lat": 23.5448,
+        "lng": 89.1541
+      },
+      "readings": [
+       {
+          "timestamp": "2025-04-20T11:00:00",
+          "pm25": 52.9,
+          "co2": 431,
+          "temperature": 31.4,
+          "sound": 52
+        }
+           ]
+    }
+  }
+}

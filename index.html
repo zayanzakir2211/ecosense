@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>EcoSense — Environmental Monitoring</title>
+<title>GreenPlus — Environmental Monitoring</title>
 <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -362,8 +362,8 @@ footer {
 
 <header>
   <div class="logo">
-    <div class="logo-dot"></div>
-    EcoSense
+    <div style="font-size: 40px;"> +</div>
+    GreenPlus
   </div>
   <div class="header-right">
     <div class="updated-tag">
@@ -419,17 +419,20 @@ footer {
 </main>
 
 <footer>
-  <span id="footerText">EcoSense · Environmental Monitoring Network · Data updates hourly</span>
+  <span id="footerText">GreenPlus · Environmental Monitoring Network · Data updates hourly</span>
 </footer>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script>
 /* ════════════════════════════════════════════════
-   CONFIG — edit before deployment
+   CONFIG
+   dataURL points to Firebase root (.json) because
+   uploader.py does db.reference("/").set(data)
+   which stores the full structure at root.
 ════════════════════════════════════════════════ */
 const CONFIG = {
-  dataURL: "https://raw.githubusercontent.com/zayanzakir2211/ecosense/refs/heads/main/data.json",
-  useMockData: false,        // set false when Pi data is ready
+  dataURL: "https://greenplus-7a811-default-rtdb.asia-southeast1.firebasedatabase.app/.json",
+  useMockData: false,
   refreshInterval: 3600000, // 1 hour in ms
 };
 
@@ -445,7 +448,7 @@ const STRINGS = {
     tabMonthly: "Monthly",
     tabYearly: "Yearly",
     rankTitle: "Area ranking",
-    footer: "EcoSense · Environmental Monitoring Network · Data updates hourly",
+    footer: "GreenPlus · Environmental Monitoring Network · Data updates hourly",
     good: "Good", moderate: "Moderate", poor: "Poor",
     updated: "Updated",
     chartHourly: "Hourly readings — today",
@@ -463,7 +466,7 @@ const STRINGS = {
     tabMonthly: "মাসিক",
     tabYearly: "বার্ষিক",
     rankTitle: "এলাকা র‍্যাংকিং",
-    footer: "EcoSense · পরিবেশ পর্যবেক্ষণ নেটওয়ার্ক · প্রতি ঘণ্টায় আপডেট",
+    footer: "GreenPlus · পরিবেশ পর্যবেক্ষণ নেটওয়ার্ক · প্রতি ঘণ্টায় আপডেট",
     good: "ভালো", moderate: "মাঝারি", poor: "খারাপ",
     updated: "আপডেট",
     chartHourly: "আজকের প্রতি ঘণ্টার তথ্য",
