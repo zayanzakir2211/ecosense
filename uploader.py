@@ -7,7 +7,7 @@ from firebase_admin import credentials, db
 
 # ── CONFIG ────────────────────────────────────────────────────────────────────
 DATA_FILE       = Path("sensordata.json")
-UPLOAD_INTERVAL = 60
+UPLOAD_INTERVAL = 3600  # seconds between each upload to Firebase (1 hour)
 
 FIREBASE_CRED   = "serviceAccountKey.json"
 FIREBASE_DB_URL = "https://greenplus-7a811-default-rtdb.asia-southeast1.firebasedatabase.app/"
